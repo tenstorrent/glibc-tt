@@ -83,3 +83,38 @@ if test "$libc_cv_static_pie_on_riscv" = yes; then
 
 fi
 
+# Check if assembler supports attribute riscv vector macro.
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gcc attribute riscv vector support" >&5
+printf %s "checking for gcc attribute riscv vector support... " >&6; }
+if test ${libc_cv_gcc_rvv+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat > conftest.S <<EOF
+foo:
+  .option push
+  .option arch, +v
+  vsetivli t0, 8, e8, m8, ta, ma
+  .option pop
+  ret
+EOF
+libc_cv_gcc_rvv=no
+if ${CC-asm} -c conftest.S -o conftest.o 1>&5 \
+  2>&5 ; then
+  libc_cv_gcc_rvv=yes
+fi
+rm -f conftest* ;;
+esac
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $libc_cv_gcc_rvv" >&5
+printf "%s\n" "$libc_cv_gcc_rvv" >&6; }
+
+if test x"$libc_cv_gcc_rvv" = xyes; then
+  printf "%s\n" "#define HAVE_RISCV_ASM_VECTOR_SUPPORT 1" >>confdefs.h
+
+fi
+
+config_vars="$config_vars
+have-gcc-riscv-rvv = $libc_cv_gcc_rvv"
+
+

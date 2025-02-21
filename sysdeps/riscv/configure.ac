@@ -43,3 +43,28 @@ EOF
 if test "$libc_cv_static_pie_on_riscv" = yes; then
   AC_DEFINE(SUPPORT_STATIC_PIE)
 fi
+
+# Check if assembler supports attribute riscv vector macro.
+AC_CACHE_CHECK([for gcc attribute riscv vector support],
+        libc_cv_gcc_rvv, [dnl
+cat > conftest.S <<EOF
+foo:
+  .option push
+  .option arch, +v
+  vsetivli t0, 8, e8, m8, ta, ma
+  .option pop
+  ret
+EOF
+libc_cv_gcc_rvv=no
+if ${CC-asm} -c conftest.S -o conftest.o 1>&AS_MESSAGE_LOG_FD \
+  2>&AS_MESSAGE_LOG_FD ; then
+  libc_cv_gcc_rvv=yes
+fi
+rm -f conftest*])
+
+if test x"$libc_cv_gcc_rvv" = xyes; then
+  AC_DEFINE(HAVE_RISCV_ASM_VECTOR_SUPPORT)
+fi
+
+LIBC_CONFIG_VAR([have-gcc-riscv-rvv], [$libc_cv_gcc_rvv])
+

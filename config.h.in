@@ -128,6 +128,9 @@
 /* RISC-V floating-point ABI for ld.so.  */
 #undef RISCV_ABI_FLEN
 
+/* Define if assembler supports vector instructions on RISC-V.  */
+#undef HAVE_RISCV_ASM_VECTOR_SUPPORT
+
 /* LOONGARCH integer ABI for ld.so.  */
 #undef LOONGARCH_ABI_GRLEN
 
