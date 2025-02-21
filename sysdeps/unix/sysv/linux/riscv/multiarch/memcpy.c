@@ -27,16 +27,24 @@
 # include <ifunc-init.h>
 # include <riscv-ifunc.h>
 # include <sys/hwprobe.h>
+# include <asm/hwcap.h>
 
 extern __typeof (__redirect_memcpy) __libc_memcpy;
 
 extern __typeof (__redirect_memcpy) __memcpy_generic attribute_hidden;
 extern __typeof (__redirect_memcpy) __memcpy_noalignment attribute_hidden;
+extern __typeof (__redirect_memcpy) __memcpy_vector attribute_hidden;
 
 static inline __typeof (__redirect_memcpy) *
 select_memcpy_ifunc (uint64_t dl_hwcap, __riscv_hwprobe_t hwprobe_func)
 {
   unsigned long long int v;
+
+#if defined(HAVE_RISCV_ASM_VECTOR_SUPPORT) 
+  if (dl_hwcap & COMPAT_HWCAP_ISA_V) 
+    return __memcpy_vector;
+#endif
+
   if (__riscv_hwprobe_one (hwprobe_func, RISCV_HWPROBE_KEY_CPUPERF_0, &v) == 0
       && (v & RISCV_HWPROBE_MISALIGNED_MASK) == RISCV_HWPROBE_MISALIGNED_FAST)
     return __memcpy_noalignment;

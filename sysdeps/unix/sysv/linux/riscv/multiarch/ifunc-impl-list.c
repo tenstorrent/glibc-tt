@@ -19,6 +19,8 @@
 #include <ifunc-impl-list.h>
 #include <string.h>
 #include <sys/hwprobe.h>
+#include <ldsodefs.h>
+#include <asm/hwcap.h>
 
 size_t
 __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
@@ -27,6 +29,9 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
   size_t i = max;
 
   bool fast_unaligned = false;
+#if defined(HAVE_RISCV_ASM_VECTOR_SUPPORT) 
+  bool rvv_ext = false;
+#endif
 
   struct riscv_hwprobe pair = { .key = RISCV_HWPROBE_KEY_CPUPERF_0 };
   if (__riscv_hwprobe (&pair, 1, 0, NULL, 0) == 0
@@ -34,7 +39,16 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
           == RISCV_HWPROBE_MISALIGNED_FAST)
     fast_unaligned = true;
 
+#if defined(HAVE_RISCV_ASM_VECTOR_SUPPORT) 
+  if (GLRO(dl_hwcap) & COMPAT_HWCAP_ISA_V) 
+    rvv_ext = true;
+#endif
+
   IFUNC_IMPL (i, name, memcpy,
+#if defined(HAVE_RISCV_ASM_VECTOR_SUPPORT) 
+	      IFUNC_IMPL_ADD (array, i, memcpy, rvv_ext,
+			      __memcpy_vector)
+#endif
 	      IFUNC_IMPL_ADD (array, i, memcpy, fast_unaligned,
 			      __memcpy_noalignment)
 	      IFUNC_IMPL_ADD (array, i, memcpy, 1, __memcpy_generic))
